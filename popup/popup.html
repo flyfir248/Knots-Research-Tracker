@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Research Thread Tracker</h1>
+  <div id="topicManagement">
+    <input type="text" id="newTopicInput" placeholder="Create new topic">
+    <button id="createTopicButton">Create Topic</button>
+    <select id="topicSelect">
+      <option value="">Select a topic</option>
+    </select>
+    <button id="removeTopicButton">Remove Topic</button>
+  </div>
+  <div id="pageInfo">
+    <textarea id="notesInput" placeholder="Enter notes about this page"></textarea>
+    <button id="saveButton">Save Current Page</button>
+  </div>
+  <div id="threadVisualizer"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

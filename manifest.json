@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "Research Thread Tracker",
+  "version": "1.0",
+  "description": "Track and save research topics and related web pages.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "browser_action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "48": "icons/4848.png",
+      "96": "icons/9696.png"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_scripts/content.js"]
+    }
+  ]
+}

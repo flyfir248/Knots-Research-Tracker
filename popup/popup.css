@@ -1,58 +1,66 @@
 body {
   font-family: Arial, sans-serif;
-  width: 300px;
-  padding: 10px;
+  margin: 20px;
 }
 
 h1 {
-  font-size: 16px;
+  font-size: 24px;
   margin-bottom: 10px;
 }
 
-#topicManagement, #pageInfo {
+#topicManagement {
   margin-bottom: 20px;
 }
 
 #newTopicInput {
-  width: calc(100% - 110px);
+  padding: 5px;
+  font-size: 14px;
 }
 
 button {
+  padding: 5px 10px;
   margin-left: 5px;
+  font-size: 14px;
 }
 
 #topicSelect {
-  width: calc(100% - 110px);
-  margin-top: 10px;
+  padding: 5px;
+  font-size: 14px;
 }
 
-#notesInput {
-  width: calc(100% - 10px);
-  height: 50px;
-  margin-top: 10px;
+#pageInfo {
+  margin-bottom: 20px;
 }
 
-#threadVisualizer {
-  margin-top: 20px;
+textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  font-size: 14px;
 }
 
-.knot {
+#threadVisualizer .page-container {
   border: 1px solid #ccc;
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 5px;
-  position: relative;
+  background-color: #f9f9f9;
 }
 
-.thread {
-  height: 20px;
-  background-color: #ccc;
-  width: 2px;
-  margin: 0 auto;
+#threadVisualizer .page-container h3 {
+  margin-top: 0;
 }
 
-.removePageButton {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+#threadVisualizer .page-container p {
+  margin: 5px 0;
+}
+
+#threadVisualizer .removePageButton {
+  padding: 5px 10px;
+  font-size: 12px;
+  background-color: #ff6666;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
 }

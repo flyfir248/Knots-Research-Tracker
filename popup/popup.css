@@ -64,3 +64,13 @@ textarea {
   border-radius: 3px;
   cursor: pointer;
 }
+
+#exportButtons {
+  margin-top: 20px;
+}
+
+#exportCSVButton, #exportJSONButton {
+  padding: 5px 10px;
+  margin-right: 5px;
+  font-size: 14px;
+}

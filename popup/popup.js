@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const notesInput = document.getElementById("notesInput");
   const saveButton = document.getElementById("saveButton");
   const threadVisualizer = document.getElementById("threadVisualizer");
+  const exportCSVButton = document.getElementById("exportCSVButton");
+  const exportJSONButton = document.getElementById("exportJSONButton");
 
   loadTopics();
 
@@ -65,6 +67,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   topicSelect.addEventListener("change", () => {
     visualizeThread(topicSelect.value);
+  });
+
+  exportCSVButton.addEventListener("click", () => {
+    const selectedTopic = topicSelect.value;
+    if (selectedTopic) {
+      exportData(selectedTopic, "csv");
+    } else {
+      alert("Please select a topic to export.");
+    }
+  });
+
+  exportJSONButton.addEventListener("click", () => {
+    const selectedTopic = topicSelect.value;
+    if (selectedTopic) {
+      exportData(selectedTopic, "json");
+    } else {
+      alert("Please select a topic to export.");
+    }
   });
 });
 
@@ -126,5 +146,33 @@ function removePage(topic, url) {
     visualizeThread(topic);
   }).catch(error => {
     console.error(`Error removing page ${url} from topic ${topic}:`, error);
+  });
+}
+
+function exportData(topic, format) {
+  browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
+    const researchTopics = response.researchTopics || {};
+    const pages = researchTopics[topic] || [];
+
+    let dataStr;
+    let filename;
+
+    if (format === "csv") {
+      const csvContent = pages.map(page => {
+        return `"${page.title.replace(/"/g, '""')}","${page.url.replace(/"/g, '""')}","${page.notes.replace(/"/g, '""')}","${new Date(page.timestamp).toLocaleString()}"`;
+      }).join("\n");
+      dataStr = `data:text/csv;charset=utf-8,Title,URL,Notes,Timestamp\n${csvContent}`;
+      filename = `${topic}.csv`;
+    } else if (format === "json") {
+      dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pages, null, 2));
+      filename = `${topic}.json`;
+    }
+
+    const downloadAnchorNode = document.createElement("a");
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", filename);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
   });
 }

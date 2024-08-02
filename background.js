@@ -14,6 +14,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === "removePage") {
     removePage(message.topic, message.url).then(sendResponse).catch(console.error);
     return true;
+  } else if (message.action === "exportData") {
+    exportData(message.format).then(sendResponse).catch(console.error);
+    return true;
   }
 });
 
@@ -68,10 +71,42 @@ function removePage(topic, url) {
   return browser.storage.local.get("researchTopics").then((result) => {
     let researchTopics = result.researchTopics || {};
     if (researchTopics[topic]) {
-      console.log(`Current pages in topic ${topic}:`, researchTopics[topic]);
       researchTopics[topic] = researchTopics[topic].filter(page => page.url !== url);
-      console.log(`Updated pages in topic ${topic}:`, researchTopics[topic]);
-      return browser.storage.local.set({ researchTopics });
+      return browser.storage.local.set({ researchTopics }).then(() => {
+        console.log(`Page ${url} removed from topic ${topic}`);
+      });
     }
+  });
+}
+
+function exportData(format) {
+  return browser.storage.local.get("researchTopics").then((result) => {
+    const researchTopics = result.researchTopics || {};
+    let dataStr;
+    let mimeType;
+    if (format === "json") {
+      dataStr = JSON.stringify(researchTopics, null, 2);
+      mimeType = "application/json";
+    } else if (format === "csv") {
+      const headers = "Topic,URL,Title,Notes,Timestamp\n";
+      const rows = Object.keys(researchTopics).flatMap(topic =>
+        researchTopics[topic].map(page =>
+          `${topic},"${page.url}","${page.title}","${page.notes}","${page.timestamp}"\n`
+        )
+      );
+      dataStr = headers + rows.join("");
+      mimeType = "text/csv";
+    } else if (format === "txt") {
+      const lines = Object.keys(researchTopics).flatMap(topic => [
+        `Topic: ${topic}`,
+        ...researchTopics[topic].map(page =>
+          `URL: ${page.url}\nTitle: ${page.title}\nNotes: ${page.notes}\nTimestamp: ${page.timestamp}\n`
+        ),
+        "\n"
+      ]);
+      dataStr = lines.join("\n");
+      mimeType = "text/plain";
+    }
+    return { dataStr, mimeType };
   });
 }

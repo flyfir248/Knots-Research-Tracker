@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const notesInput = document.getElementById("notesInput");
   const saveButton = document.getElementById("saveButton");
   const threadVisualizer = document.getElementById("threadVisualizer");
+  const exportFormatSelect = document.getElementById("exportFormatSelect");
+  const exportButton = document.getElementById("exportButton");
 
   loadTopics();
 
@@ -66,6 +68,25 @@ document.addEventListener("DOMContentLoaded", () => {
   topicSelect.addEventListener("change", () => {
     visualizeThread(topicSelect.value);
   });
+
+  exportButton.addEventListener("click", () => {
+    const format = exportFormatSelect.value;
+    browser.runtime.sendMessage({
+      action: "exportData",
+      format: format
+    }).then((response) => {
+      const { dataStr, mimeType } = response;
+      const blob = new Blob([dataStr], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `research_data.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }).catch(console.error);
+  });
 });
 
 function loadTopics() {
@@ -82,45 +103,43 @@ function loadTopics() {
       option.textContent = topic;
       topicSelect.appendChild(option);
     }
-
-    if (topicSelect.value) {
-      visualizeThread(topicSelect.value);
-    }
   }).catch(console.error);
 }
 
 function visualizeThread(topic) {
+  const threadVisualizer = document.getElementById("threadVisualizer");
+  if (!topic) {
+    threadVisualizer.innerHTML = "";
+    return;
+  }
+
   browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
-    const threadVisualizer = document.getElementById("threadVisualizer");
     const researchTopics = response.researchTopics || {};
     const pages = researchTopics[topic] || [];
 
     threadVisualizer.innerHTML = "";
-
+    const ul = document.createElement("ul");
     pages.forEach((page, index) => {
-      const knot = document.createElement("div");
-      knot.className = "knot";
-      knot.innerHTML = `
-        <h3>${page.title}</h3>
-        <p><a href="${page.url}" target="_blank">${page.url}</a></p>
-        <p>${page.notes}</p>
-        <p>${new Date(page.timestamp).toLocaleString()}</p>
-        <button class="removePageButton" data-url="${page.url}">Remove</button>
-      `;
-
-      knot.querySelector(".removePageButton").addEventListener("click", () => {
-        console.log(`Removing page ${page.url} from topic ${topic}`);
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = page.url;
+      a.target = "_blank";
+      a.textContent = `${index + 1}. ${page.title}`;
+      const removeButton = document.createElement("button");
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
         removePage(topic, page.url);
       });
-
-      threadVisualizer.appendChild(knot);
-
-      if (index < pages.length - 1) {
-        const thread = document.createElement("div");
-        thread.className = "thread";
-        threadVisualizer.appendChild(thread);
-      }
+      li.appendChild(a);
+      li.appendChild(document.createElement("br"));
+      li.appendChild(document.createTextNode(page.notes));
+      li.appendChild(document.createElement("br"));
+      li.appendChild(document.createTextNode(`Timestamp: ${page.timestamp}`));
+      li.appendChild(document.createElement("br"));
+      li.appendChild(removeButton);
+      ul.appendChild(li);
     });
+    threadVisualizer.appendChild(ul);
   }).catch(console.error);
 }
 
@@ -130,7 +149,6 @@ function removePage(topic, url) {
     topic: topic,
     url: url
   }).then(() => {
-    console.log(`Page ${url} removed from topic ${topic}`);
     visualizeThread(topic);
   }).catch(console.error);
 }

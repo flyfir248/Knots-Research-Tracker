@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="popup.css">
-  <title>Research Thread Tracker</title>
+  <title>Knots Research Tracker</title>
 </head>
 <body>
-  <h1>Research Thread Tracker</h1>
+  <h1>Knots Thread Tracker</h1>
   <div id="topicManagement">
     <input type="text" id="newTopicInput" placeholder="Create new topic">
     <button id="createTopicButton">Create Topic</button>
@@ -20,6 +20,15 @@
     <button id="saveButton">Save Current Page</button>
   </div>
   <div id="threadVisualizer"></div>
+  <h2>Export</h2>
+  <div id="exportOptions">
+    <select id="exportFormatSelect">
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+      <option value="txt">Text</option>
+    </select>
+    <button id="exportButton">Export</button>
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>

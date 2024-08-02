@@ -1,14 +1,19 @@
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "saveInfo") {
-    return saveResearchInfo(message.data);
+    saveResearchInfo(message.data).then(sendResponse).catch(console.error);
+    return true;
   } else if (message.action === "getInfo") {
-    return getResearchInfo();
+    getResearchInfo().then(sendResponse).catch(console.error);
+    return true;
   } else if (message.action === "createTopic") {
-    return createTopic(message.topic);
+    createTopic(message.topic).then(sendResponse).catch(console.error);
+    return true;
   } else if (message.action === "removeTopic") {
-    return removeTopic(message.topic);
+    removeTopic(message.topic).then(sendResponse).catch(console.error);
+    return true;
   } else if (message.action === "removePage") {
-    return removePage(message.topic, message.url);
+    removePage(message.topic, message.url).then(sendResponse).catch(console.error);
+    return true;
   }
 });
 
@@ -37,7 +42,11 @@ function createTopic(topic) {
     let researchTopics = result.researchTopics || {};
     if (!researchTopics[topic]) {
       researchTopics[topic] = [];
-      return browser.storage.local.set({ researchTopics });
+      return browser.storage.local.set({ researchTopics }).then(() => {
+        console.log(`Topic "${topic}" created.`);
+      });
+    } else {
+      console.log(`Topic "${topic}" already exists.`);
     }
   });
 }
@@ -47,16 +56,21 @@ function removeTopic(topic) {
     let researchTopics = result.researchTopics || {};
     if (researchTopics[topic]) {
       delete researchTopics[topic];
-      return browser.storage.local.set({ researchTopics });
+      return browser.storage.local.set({ researchTopics }).then(() => {
+        console.log(`Topic "${topic}" removed.`);
+      });
     }
   });
 }
 
 function removePage(topic, url) {
+  console.log(`Attempting to remove page ${url} from topic ${topic}`);
   return browser.storage.local.get("researchTopics").then((result) => {
     let researchTopics = result.researchTopics || {};
     if (researchTopics[topic]) {
+      console.log(`Current pages in topic ${topic}:`, researchTopics[topic]);
       researchTopics[topic] = researchTopics[topic].filter(page => page.url !== url);
+      console.log(`Updated pages in topic ${topic}:`, researchTopics[topic]);
       return browser.storage.local.set({ researchTopics });
     }
   });

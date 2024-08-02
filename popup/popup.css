@@ -1,97 +1,58 @@
 body {
-    width: 350px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f4f8;
-    color: #2c3e50;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  width: 300px;
+  padding: 10px;
 }
 
 h1 {
-    color: #1a237e;
-    font-size: 24px;
-    margin-bottom: 20px;
-    text-align: center;
-    font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
-#topicManagement {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
+#topicManagement, #pageInfo {
+  margin-bottom: 20px;
 }
 
-input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
-    font-size: 14px;
-    transition: border-color 0.3s ease;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #1a237e;
+#newTopicInput {
+  width: calc(100% - 110px);
 }
 
 button {
-    background-color: #1a237e;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-weight: 500;
+  margin-left: 5px;
 }
 
-button:hover {
-    background-color: #3949ab;
+#topicSelect {
+  width: calc(100% - 110px);
+  margin-top: 10px;
 }
 
-#createTopicButton, #removeTopicButton {
-    flex-basis: calc(50% - 5px);
+#notesInput {
+  width: calc(100% - 10px);
+  height: 50px;
+  margin-top: 10px;
 }
 
 #threadVisualizer {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .knot {
-    background-color: white;
-    border-left: 4px solid #1a237e;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.knot h3 {
-    color: #1a237e;
-    margin-top: 0;
-    font-size: 18px;
-}
-
-.knot p {
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-.knot a {
-    color: #3949ab;
-    text-decoration: none;
-}
-
-.knot a:hover {
-    text-decoration: underline;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  position: relative;
 }
 
 .thread {
-    width: 2px;
-    height: 20px;
-    background-color: #1a237e;
-    margin: 0 auto;
+  height: 20px;
+  background-color: #ccc;
+  width: 2px;
+  margin: 0 auto;
+}
+
+.removePageButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }

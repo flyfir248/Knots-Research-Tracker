@@ -104,9 +104,15 @@ function visualizeThread(topic) {
         <h3>${page.title}</h3>
         <p><a href="${page.url}" target="_blank">${page.url}</a></p>
         <p>${page.notes}</p>
-        <small>Added on: ${new Date(page.timestamp).toLocaleString()}</small>
+        <p>${new Date(page.timestamp).toLocaleString()}</p>
         <button class="removePageButton" data-url="${page.url}">Remove</button>
       `;
+
+      knot.querySelector(".removePageButton").addEventListener("click", () => {
+        console.log(`Removing page ${page.url} from topic ${topic}`);
+        removePage(topic, page.url);
+      });
+
       threadVisualizer.appendChild(knot);
 
       if (index < pages.length - 1) {
@@ -115,18 +121,18 @@ function visualizeThread(topic) {
         threadVisualizer.appendChild(thread);
       }
     });
+  });
+}
 
-    document.querySelectorAll(".removePageButton").forEach(button => {
-      button.addEventListener("click", () => {
-        const url = button.getAttribute("data-url");
-        browser.runtime.sendMessage({
-          action: "removePage",
-          topic: topic,
-          url: url
-        }).then(() => {
-          visualizeThread(topic);
-        });
-      });
-    });
+function removePage(topic, url) {
+  browser.runtime.sendMessage({
+    action: "removePage",
+    topic: topic,
+    url: url
+  }).then(() => {
+    console.log(`Page ${url} removed from topic ${topic}`);
+    visualizeThread(topic);
+  }).catch(error => {
+    console.error(`Error removing page ${url} from topic ${topic}:`, error);
   });
 }

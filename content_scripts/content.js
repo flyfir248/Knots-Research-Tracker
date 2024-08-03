@@ -8,8 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const threadVisualizer = document.getElementById("threadVisualizer");
   const exportFormatSelect = document.getElementById("exportFormatSelect");
   const exportButton = document.getElementById("exportButton");
+  const placeholder = document.getElementById('placeholder');
 
   loadTopics();
+    function updatePlaceholderVisibility() {
+    if (topicSelect.options.length <= 1) {
+      placeholder.classList.remove('hidden');
+    } else {
+      placeholder.classList.add('hidden');
+    }
+  }
 
   createTopicButton.addEventListener("click", () => {
     const newTopic = newTopicInput.value.trim();

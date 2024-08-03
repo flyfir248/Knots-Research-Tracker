@@ -1,11 +1,22 @@
 body {
   font-family: Arial, sans-serif;
   margin: 20px;
+  background-color: #dee0ec;
+  color: #333;
+}
+
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Adjust the gap as needed */
 }
 
 h1 {
-  font-size: 24px;
-  margin-bottom: 10px;
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
 }
 
 #topicManagement {
@@ -14,30 +25,46 @@ h1 {
 }
 
 #newTopicInput {
-  padding: 5px;
+  padding: 10px;
   font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 button {
-  padding: 5px 10px;
+  padding: 8px 12px;
   margin-left: 5px;
   font-size: 14px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #555;
 }
 
 #topicSelect {
-  padding: 5px;
+  padding: 10px;
   font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .page-container {
   border: 1px solid #ccc;
-  padding: 10px;
+  padding: 15px;
   margin-bottom: 10px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .page-container h3 {
   margin-top: 0;
+  font-size: 18px;
 }
 
 #pageInfo {
@@ -46,21 +73,25 @@ button {
 
 textarea {
   width: 100%;
-  height: 100px;
+  height: 120px;
   padding: 10px;
   font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 #threadVisualizer .page-container {
   border: 1px solid #ccc;
-  padding: 10px;
+  padding: 15px;
   margin-bottom: 10px;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #threadVisualizer .page-container h3 {
   margin-top: 0;
+  font-size: 18px;
 }
 
 #threadVisualizer .page-container p {
@@ -73,18 +104,32 @@ textarea {
   background-color: #ff6666;
   color: white;
   border: none;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
+}
+
+#threadVisualizer .removePageButton:hover {
+  background-color: #cc0000;
 }
 
 #exportButtons {
   margin-top: 20px;
+  text-align: center;
 }
 
 #exportCSVButton, #exportJSONButton {
-  padding: 5px 10px;
+  padding: 8px 12px;
   margin-right: 5px;
   font-size: 14px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#exportCSVButton:hover, #exportJSONButton:hover {
+  background-color: #555;
 }
 
 #placeholder {
@@ -109,16 +154,29 @@ textarea {
 
 #searchSection {
   margin-bottom: 10px;
+  text-align: center;
 }
 
 #searchInput {
-  width: 70%;
-  padding: 5px;
+  width: 60%;
+  padding: 10px;
   margin-right: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 #searchButton {
-  padding: 5px 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#searchButton:hover {
+  background-color: #555;
 }
 
 #pageInfo, #searchBar, #exportButtons, #placeholder {
@@ -128,6 +186,10 @@ textarea {
 
 #notesInput {
   width: 90%;
-  height: 100px;
+  height: 120px;
   margin-bottom: 10px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }

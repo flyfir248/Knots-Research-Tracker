@@ -15,6 +15,10 @@
     </select>
     <button id="removeTopicButton">Remove Topic</button>
   </div>
+  <div id="searchSection">
+    <input type="text" id="searchInput" placeholder="Search your research">
+    <button id="searchButton">Search</button>
+  </div>
   <div id="pageInfo">
     <textarea id="notesInput" placeholder="Enter notes about this page"></textarea>
     <button id="saveButton">Save Current Page</button>
@@ -23,6 +27,10 @@
   <div id="exportButtons">
     <button id="exportCSVButton">Export as CSV</button>
     <button id="exportJSONButton">Export as JSON</button>
+  </div>
+  <div id="placeholder" class="hidden">
+    <img src="icons\NewProject.png" alt="Placeholder" id="placeholderImage">
+    <p id="placeholderText">Start by creating a new topic to organize your research.</p>
   </div>
   <script src="popup.js"></script>
 </body>

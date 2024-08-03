@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const threadVisualizer = document.getElementById("threadVisualizer");
   const exportCSVButton = document.getElementById("exportCSVButton");
   const exportJSONButton = document.getElementById("exportJSONButton");
+  const placeholder = document.getElementById("placeholder");
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
 
   loadTopics();
 
@@ -86,6 +89,15 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please select a topic to export.");
     }
   });
+
+  searchButton.addEventListener("click", () => {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    if (searchTerm) {
+      searchResearch(searchTerm);
+    } else {
+      alert("Please enter a search term.");
+    }
+  });
 });
 
 function loadTopics() {
@@ -95,6 +107,12 @@ function loadTopics() {
 
     // Clear existing options
     topicSelect.innerHTML = '<option value="">Select a topic</option>';
+
+    if (Object.keys(researchTopics).length === 0) {
+      document.getElementById("placeholder").classList.remove("hidden");
+    } else {
+      document.getElementById("placeholder").classList.add("hidden");
+    }
 
     for (const topic of Object.keys(researchTopics)) {
       const option = document.createElement("option");
@@ -110,6 +128,7 @@ function loadTopics() {
 }
 
 function visualizeThread(topic) {
+  searchInput.value = "";
   browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
     const threadVisualizer = document.getElementById("threadVisualizer");
     const researchTopics = response.researchTopics || {};
@@ -150,29 +169,87 @@ function removePage(topic, url) {
 }
 
 function exportData(topic, format) {
-  browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
+  browser.runtime.sendMessage({
+    action: "getInfo"
+  }).then((response) => {
     const researchTopics = response.researchTopics || {};
     const pages = researchTopics[topic] || [];
 
-    let dataStr;
-    let filename;
-
+    let dataStr, filename;
     if (format === "csv") {
       const csvContent = pages.map(page => {
-        return `"${page.title.replace(/"/g, '""')}","${page.url.replace(/"/g, '""')}","${page.notes.replace(/"/g, '""')}","${new Date(page.timestamp).toLocaleString()}"`;
+        return `"${page.title.replace(/"/g, '""')}","${page.url}","${page.notes.replace(/"/g, '""')}","${new Date(page.timestamp).toLocaleString()}"`;
       }).join("\n");
+
       dataStr = `data:text/csv;charset=utf-8,Title,URL,Notes,Timestamp\n${csvContent}`;
-      filename = `${topic}.csv`;
+      filename = `${topic}_research.csv`;
     } else if (format === "json") {
-      dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pages, null, 2));
-      filename = `${topic}.json`;
+      const jsonContent = JSON.stringify(pages, null, 2);
+      dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(jsonContent)}`;
+      filename = `${topic}_research.json`;
     }
 
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", filename);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const downloadLink = document.createElement("a");
+    downloadLink.setAttribute("href", dataStr);
+    downloadLink.setAttribute("download", filename);
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+  });
+}
+
+function searchResearch(searchTerm) {
+  browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
+    const researchTopics = response.researchTopics || {};
+    const results = [];
+
+    for (const topic in researchTopics) {
+      const pages = researchTopics[topic];
+      const matchingPages = pages.filter(page =>
+        page.title.toLowerCase().includes(searchTerm) ||
+        page.url.toLowerCase().includes(searchTerm) ||
+        page.notes.toLowerCase().includes(searchTerm)
+      );
+
+      if (matchingPages.length > 0) {
+        results.push({topic, pages: matchingPages});
+      }
+    }
+
+    displaySearchResults(results);
+  });
+}
+
+function displaySearchResults(results) {
+  const threadVisualizer = document.getElementById("threadVisualizer");
+  threadVisualizer.innerHTML = "";
+
+  if (results.length === 0) {
+    threadVisualizer.innerHTML = "<p>No results found.</p>";
+    return;
+  }
+
+  results.forEach(result => {
+    const topicHeader = document.createElement("h2");
+    topicHeader.textContent = result.topic;
+    threadVisualizer.appendChild(topicHeader);
+
+    result.pages.forEach(page => {
+      const container = document.createElement("div");
+      container.className = "page-container";
+      container.innerHTML = `
+        <h3>${page.title}</h3>
+        <p><a href="${page.url}" target="_blank">${page.url}</a></p>
+        <p>${page.notes}</p>
+        <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
+        <button class="removePageButton" data-url="${page.url}">Remove</button>
+      `;
+
+      container.querySelector(".removePageButton").addEventListener("click", () => {
+        removePage(result.topic, page.url);
+      });
+
+      threadVisualizer.appendChild(container);
+    });
   });
 }

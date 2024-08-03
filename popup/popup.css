@@ -10,6 +10,7 @@ h1 {
 
 #topicManagement {
   margin-bottom: 20px;
+  text-align: center;
 }
 
 #newTopicInput {
@@ -26,6 +27,17 @@ button {
 #topicSelect {
   padding: 5px;
   font-size: 14px;
+}
+
+.page-container {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+}
+
+.page-container h3 {
+  margin-top: 0;
 }
 
 #pageInfo {
@@ -80,10 +92,10 @@ textarea {
   margin-top: 50px;
 }
 
-#placeholderImage {
-  width: 300px; /* Adjust the width as needed */
+#placeholder img {
+  width: 150px;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 #placeholderText {
@@ -107,4 +119,15 @@ textarea {
 
 #searchButton {
   padding: 5px 10px;
+}
+
+#pageInfo, #searchBar, #exportButtons, #placeholder {
+  margin: 20px;
+  text-align: center;
+}
+
+#notesInput {
+  width: 90%;
+  height: 100px;
+  margin-bottom: 10px;
 }

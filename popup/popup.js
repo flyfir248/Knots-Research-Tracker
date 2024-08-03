@@ -5,12 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const removeTopicButton = document.getElementById("removeTopicButton");
   const notesInput = document.getElementById("notesInput");
   const saveButton = document.getElementById("saveButton");
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
   const threadVisualizer = document.getElementById("threadVisualizer");
   const exportCSVButton = document.getElementById("exportCSVButton");
   const exportJSONButton = document.getElementById("exportJSONButton");
   const placeholder = document.getElementById("placeholder");
-  const searchInput = document.getElementById("searchInput");
-  const searchButton = document.getElementById("searchButton");
 
   loadTopics();
 
@@ -72,6 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
     visualizeThread(topicSelect.value);
   });
 
+  searchButton.addEventListener("click", () => {
+    const query = searchInput.value.trim().toLowerCase();
+    if (query) {
+      searchPages(query);
+    }
+  });
+
   exportCSVButton.addEventListener("click", () => {
     const selectedTopic = topicSelect.value;
     if (selectedTopic) {
@@ -87,15 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
       exportData(selectedTopic, "json");
     } else {
       alert("Please select a topic to export.");
-    }
-  });
-
-  searchButton.addEventListener("click", () => {
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    if (searchTerm) {
-      searchResearch(searchTerm);
-    } else {
-      alert("Please enter a search term.");
     }
   });
 });
@@ -128,7 +126,6 @@ function loadTopics() {
 }
 
 function visualizeThread(topic) {
-  searchInput.value = "";
   browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
     const threadVisualizer = document.getElementById("threadVisualizer");
     const researchTopics = response.researchTopics || {};
@@ -156,16 +153,51 @@ function visualizeThread(topic) {
   });
 }
 
+function searchPages(query) {
+  const selectedTopic = document.getElementById("topicSelect").value;
+  if (selectedTopic) {
+    browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
+      const researchTopics = response.researchTopics || {};
+      const pages = researchTopics[selectedTopic] || [];
+
+      const filteredPages = pages.filter((page) => {
+        return page.title.toLowerCase().includes(query) || page.notes.toLowerCase().includes(query);
+      });
+
+      const threadVisualizer = document.getElementById("threadVisualizer");
+      threadVisualizer.innerHTML = "";
+
+      filteredPages.forEach((page) => {
+        const container = document.createElement("div");
+        container.className = "page-container";
+        container.innerHTML = `
+          <h3>${page.title}</h3>
+          <p><a href="${page.url}" target="_blank">${page.url}</a></p>
+          <p>${page.notes}</p>
+          <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
+          <button class="removePageButton" data-url="${page.url}">Remove</button>
+        `;
+
+        container.querySelector(".removePageButton").addEventListener("click", () => {
+          removePage(selectedTopic, page.url);
+        });
+
+        threadVisualizer.appendChild(container);
+      });
+    });
+  }
+}
+
 function removePage(topic, url) {
-  browser.runtime.sendMessage({
-    action: "removePage",
-    topic: topic,
-    url: url
-  }).then(() => {
-    visualizeThread(topic);
-  }).catch(error => {
-    console.error(`Error removing page ${url} from topic ${topic}:`, error);
-  });
+  if (confirm("Are you sure you want to remove this page?")) {
+    browser.runtime.sendMessage({
+      action: "removePage",
+      topic: topic,
+      url: url
+    }).then(() => {
+      visualizeThread(topic);
+    });
+  }
 }
 
 function exportData(topic, format) {
@@ -195,61 +227,5 @@ function exportData(topic, format) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
     downloadLink.remove();
-  });
-}
-
-function searchResearch(searchTerm) {
-  browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
-    const researchTopics = response.researchTopics || {};
-    const results = [];
-
-    for (const topic in researchTopics) {
-      const pages = researchTopics[topic];
-      const matchingPages = pages.filter(page =>
-        page.title.toLowerCase().includes(searchTerm) ||
-        page.url.toLowerCase().includes(searchTerm) ||
-        page.notes.toLowerCase().includes(searchTerm)
-      );
-
-      if (matchingPages.length > 0) {
-        results.push({topic, pages: matchingPages});
-      }
-    }
-
-    displaySearchResults(results);
-  });
-}
-
-function displaySearchResults(results) {
-  const threadVisualizer = document.getElementById("threadVisualizer");
-  threadVisualizer.innerHTML = "";
-
-  if (results.length === 0) {
-    threadVisualizer.innerHTML = "<p>No results found.</p>";
-    return;
-  }
-
-  results.forEach(result => {
-    const topicHeader = document.createElement("h2");
-    topicHeader.textContent = result.topic;
-    threadVisualizer.appendChild(topicHeader);
-
-    result.pages.forEach(page => {
-      const container = document.createElement("div");
-      container.className = "page-container";
-      container.innerHTML = `
-        <h3>${page.title}</h3>
-        <p><a href="${page.url}" target="_blank">${page.url}</a></p>
-        <p>${page.notes}</p>
-        <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
-        <button class="removePageButton" data-url="${page.url}">Remove</button>
-      `;
-
-      container.querySelector(".removePageButton").addEventListener("click", () => {
-        removePage(result.topic, page.url);
-      });
-
-      threadVisualizer.appendChild(container);
-    });
   });
 }

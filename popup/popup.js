@@ -118,11 +118,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Apply theme
-  themeSelect.addEventListener("change", (e) => {
-    document.body.classList.remove("theme-default", "theme-dark", "theme-light");
-    document.body.classList.add(`theme-${e.target.value}`);
-    saveSettings();
-  });
+    themeSelect.addEventListener("change", (e) => {
+      document.body.classList.remove("theme-default", "theme-dark", "theme-light", "theme-sepia", "theme-forest", "theme-ocean", "theme-sunset", "theme-cyberpunk");
+      document.body.classList.add(`theme-${e.target.value}`);
+      saveSettings();
+    });
+
 
   // Load saved settings
   loadSettings();
@@ -291,6 +292,7 @@ function saveSettings() {
   browser.storage.local.set({ settings });
 }
 
+// In the loadSettings function:
 function loadSettings() {
   browser.storage.local.get("settings").then((result) => {
     const settings = result.settings || { textSize: "medium", theme: "default" };

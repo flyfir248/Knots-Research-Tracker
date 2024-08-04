@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
 
+  // New elements for settings
+  const settingsButton = document.getElementById("settingsButton");
+  const settingsDropdown = document.getElementById("settingsDropdown");
+  const textSizeSelect = document.getElementById("textSize");
+  const themeSelect = document.getElementById("theme");
+
   loadTopics();
 
   createTopicButton.addEventListener("click", () => {
@@ -98,6 +104,28 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please enter a search term.");
     }
   });
+
+  // Toggle settings menu
+  settingsButton.addEventListener("click", () => {
+    settingsDropdown.classList.toggle("hidden");
+  });
+
+  // Apply text size
+  textSizeSelect.addEventListener("change", (e) => {
+    document.body.classList.remove("text-small", "text-medium", "text-large");
+    document.body.classList.add(`text-${e.target.value}`);
+    saveSettings();
+  });
+
+  // Apply theme
+  themeSelect.addEventListener("change", (e) => {
+    document.body.classList.remove("theme-default", "theme-dark", "theme-light");
+    document.body.classList.add(`theme-${e.target.value}`);
+    saveSettings();
+  });
+
+  // Load saved settings
+  loadSettings();
 });
 
 function loadTopics() {
@@ -128,6 +156,7 @@ function loadTopics() {
 }
 
 function visualizeThread(topic) {
+  const searchInput = document.getElementById("searchInput");
   searchInput.value = "";
   browser.runtime.sendMessage({action: "getInfo"}).then((response) => {
     const threadVisualizer = document.getElementById("threadVisualizer");
@@ -251,5 +280,22 @@ function displaySearchResults(results) {
 
       threadVisualizer.appendChild(container);
     });
+  });
+}
+
+function saveSettings() {
+  const settings = {
+    textSize: document.getElementById("textSize").value,
+    theme: document.getElementById("theme").value
+  };
+  browser.storage.local.set({ settings });
+}
+
+function loadSettings() {
+  browser.storage.local.get("settings").then((result) => {
+    const settings = result.settings || { textSize: "medium", theme: "default" };
+    document.getElementById("textSize").value = settings.textSize;
+    document.getElementById("theme").value = settings.theme;
+    document.body.classList.add(`text-${settings.textSize}`, `theme-${settings.theme}`);
   });
 }

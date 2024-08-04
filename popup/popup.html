@@ -9,6 +9,28 @@
   <div id="header">
     <img src="../icons/4848.png" alt="Extension Icon" id="extensionIcon">
     <h1>Knots Thread Tracker</h1>
+    <div id="settingsMenu">
+      <button id="settingsButton">⋮</button>
+      <div id="settingsDropdown" class="hidden">
+        <h3>Settings</h3>
+        <div class="setting">
+          <label for="textSize">Text Size:</label>
+          <select id="textSize">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label for="theme">Theme:</label>
+          <select id="theme">
+            <option value="default" selected>Default</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="topicManagement">
     <input type="text" id="newTopicInput" placeholder="Create new topic">

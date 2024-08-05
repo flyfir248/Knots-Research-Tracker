@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const placeholder = document.getElementById("placeholder");
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
+  const pageRating = document.getElementById("pageRating");
 
   // New elements for settings
   const settingsButton = document.getElementById("settingsButton");
@@ -50,29 +51,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  saveButton.addEventListener("click", () => {
-    const selectedTopic = topicSelect.value;
-    if (selectedTopic) {
-      browser.tabs.query({active: true, currentWindow: true}).then((tabs) => {
-        const activeTab = tabs[0];
-        browser.runtime.sendMessage({
-          action: "saveInfo",
-          data: {
-            topic: selectedTopic,
-            url: activeTab.url,
-            title: activeTab.title,
-            notes: notesInput.value
-          }
-        }).then(() => {
-          loadTopics();
-          notesInput.value = "";
-          visualizeThread(selectedTopic);
+    saveButton.addEventListener("click", () => {
+      const selectedTopic = topicSelect.value;
+      if (selectedTopic) {
+        browser.tabs.query({active: true, currentWindow: true}).then((tabs) => {
+          const activeTab = tabs[0];
+          const rating = pageRating.value; // Make sure this line is present
+          browser.runtime.sendMessage({
+            action: "saveInfo",
+            data: {
+              topic: selectedTopic,
+              url: activeTab.url,
+              title: activeTab.title,
+              notes: notesInput.value,
+              rating: rating, // Ensure this is included
+              timestamp: Date.now()
+            }
+          }).then(() => {
+            loadTopics();
+            notesInput.value = "";
+            visualizeThread(selectedTopic);
+          });
         });
-      });
-    } else {
-      alert("Please select a topic first.");
-    }
-  });
+      } else {
+        alert("Please select a topic first.");
+      }
+    });
 
   topicSelect.addEventListener("change", () => {
     visualizeThread(topicSelect.value);
@@ -118,12 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Apply theme
-    themeSelect.addEventListener("change", (e) => {
-      document.body.classList.remove("theme-default", "theme-dark", "theme-light", "theme-sepia", "theme-forest", "theme-ocean", "theme-sunset", "theme-cyberpunk");
-      document.body.classList.add(`theme-${e.target.value}`);
-      saveSettings();
-    });
-
+  themeSelect.addEventListener("change", (e) => {
+    document.body.classList.remove("theme-default", "theme-dark", "theme-light", "theme-sepia", "theme-forest", "theme-ocean", "theme-sunset", "theme-cyberpunk");
+    document.body.classList.add(`theme-${e.target.value}`);
+    saveSettings();
+  });
 
   // Load saved settings
   loadSettings();
@@ -167,15 +170,16 @@ function visualizeThread(topic) {
     threadVisualizer.innerHTML = "";
 
     pages.forEach((page) => {
-      const container = document.createElement("div");
-      container.className = "page-container";
-      container.innerHTML = `
-        <h3>${page.title}</h3>
-        <p><a href="${page.url}" target="_blank">${page.url}</a></p>
-        <p>${page.notes}</p>
-        <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
-        <button class="removePageButton" data-url="${page.url}">Remove</button>
-      `;
+    const container = document.createElement("div");
+    container.className = "page-container";
+    container.innerHTML = `
+      <h3>${page.title}</h3>
+      <p><a href="${page.url}" target="_blank">${page.url}</a></p>
+      <p>${page.notes}</p>
+      <p><em>Rating:</em> ${getRatingText(page.rating)}</p>
+      <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
+      <button class="removePageButton" data-url="${page.url}">Remove</button>
+    `;
 
       container.querySelector(".removePageButton").addEventListener("click", () => {
         removePage(topic, page.url);
@@ -184,6 +188,17 @@ function visualizeThread(topic) {
       threadVisualizer.appendChild(container);
     });
   });
+}
+
+function getRatingText(rating) {
+  const ratingTexts = {
+    '1': '1 - Not Relevant',
+    '2': '2 - Somewhat Relevant',
+    '3': '3 - Relevant',
+    '4': '4 - Very Relevant',
+    '5': '5 - Extremely Relevant'
+  };
+  return rating ? ratingTexts[rating] : 'Not rated';
 }
 
 function removePage(topic, url) {
@@ -208,10 +223,10 @@ function exportData(topic, format) {
     let dataStr, filename;
     if (format === "csv") {
       const csvContent = pages.map(page => {
-        return `"${page.title.replace(/"/g, '""')}","${page.url}","${page.notes.replace(/"/g, '""')}","${new Date(page.timestamp).toLocaleString()}"`;
+        return `"${page.title.replace(/"/g, '""')}","${page.url}","${page.notes.replace(/"/g, '""')}","${page.rating || 'Not rated'}","${new Date(page.timestamp).toLocaleString()}"`;
       }).join("\n");
 
-      dataStr = `data:text/csv;charset=utf-8,Title,URL,Notes,Timestamp\n${csvContent}`;
+      dataStr = `data:text/csv;charset=utf-8,Title,URL,Notes,Rating,Timestamp\n${csvContent}`;
       filename = `${topic}_research.csv`;
     } else if (format === "json") {
       const jsonContent = JSON.stringify(pages, null, 2);
@@ -238,7 +253,8 @@ function searchResearch(searchTerm) {
       const matchingPages = pages.filter(page =>
         page.title.toLowerCase().includes(searchTerm) ||
         page.url.toLowerCase().includes(searchTerm) ||
-        page.notes.toLowerCase().includes(searchTerm)
+        page.notes.toLowerCase().includes(searchTerm) ||
+        (page.rating && page.rating.toString() === searchTerm)
       );
 
       if (matchingPages.length > 0) {
@@ -271,6 +287,7 @@ function displaySearchResults(results) {
         <h3>${page.title}</h3>
         <p><a href="${page.url}" target="_blank">${page.url}</a></p>
         <p>${page.notes}</p>
+        <p><em>Rating:</em> ${page.rating || 'Not rated'}</p>
         <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
         <button class="removePageButton" data-url="${page.url}">Remove</button>
       `;
@@ -292,7 +309,6 @@ function saveSettings() {
   browser.storage.local.set({ settings });
 }
 
-// In the loadSettings function:
 function loadSettings() {
   browser.storage.local.get("settings").then((result) => {
     const settings = result.settings || { textSize: "medium", theme: "default" };

@@ -51,6 +51,16 @@
   </div>
   <div id="pageInfo">
     <textarea id="notesInput" placeholder="Enter notes about this page"></textarea>
+    <div id="ratingContainer">
+      <label for="pageRating">Page Rating:</label>
+      <select id="pageRating">
+        <option value="1">1 - Not Relevant</option>
+        <option value="2">2 - Somewhat Relevant</option>
+        <option value="3" selected>3 - Relevant</option>
+        <option value="4">4 - Very Relevant</option>
+        <option value="5">5 - Extremely Relevant</option>
+      </select>
+    </div>
     <button id="saveButton">Save Current Page</button>
   </div>
   <div id="threadVisualizer"></div>

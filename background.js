@@ -30,6 +30,7 @@ function saveResearchInfo(data) {
       url: data.url,
       title: data.title,
       notes: data.notes,
+      rating: data.rating, // Ensure rating is saved
       timestamp: new Date().toISOString()
     });
     return browser.storage.local.set({ researchTopics });
@@ -88,10 +89,10 @@ function exportData(format) {
       dataStr = JSON.stringify(researchTopics, null, 2);
       mimeType = "application/json";
     } else if (format === "csv") {
-      const headers = "Topic,URL,Title,Notes,Timestamp\n";
+      const headers = "Topic,URL,Title,Notes,Rating,Timestamp\n";
       const rows = Object.keys(researchTopics).flatMap(topic =>
         researchTopics[topic].map(page =>
-          `${topic},"${page.url}","${page.title}","${page.notes}","${page.timestamp}"\n`
+          `${topic},"${page.url}","${page.title}","${page.notes}",${page.rating},"${page.timestamp}"\n`
         )
       );
       dataStr = headers + rows.join("");
@@ -100,7 +101,7 @@ function exportData(format) {
       const lines = Object.keys(researchTopics).flatMap(topic => [
         `Topic: ${topic}`,
         ...researchTopics[topic].map(page =>
-          `URL: ${page.url}\nTitle: ${page.title}\nNotes: ${page.notes}\nTimestamp: ${page.timestamp}\n`
+          `URL: ${page.url}\nTitle: ${page.title}\nNotes: ${page.notes}\nRating: ${getRatingText(page.rating)}\nTimestamp: ${page.timestamp}\n`
         ),
         "\n"
       ]);
@@ -109,4 +110,15 @@ function exportData(format) {
     }
     return { dataStr, mimeType };
   });
+}
+
+function getRatingText(rating) {
+  const ratingTexts = {
+    '1': '1 - Not Relevant',
+    '2': '2 - Somewhat Relevant',
+    '3': '3 - Relevant',
+    '4': '4 - Very Relevant',
+    '5': '5 - Extremely Relevant'
+  };
+  return rating ? ratingTexts[rating] : 'Not rated';
 }

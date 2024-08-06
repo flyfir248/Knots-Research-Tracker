@@ -1,124 +1,154 @@
+let researchTopics = {};
+
+browser.runtime.onInstalled.addListener(() => {
+  browser.storage.local.get("researchTopics").then((result) => {
+    if (result.researchTopics) {
+      researchTopics = result.researchTopics;
+    }
+  });
+});
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "saveInfo") {
-    saveResearchInfo(message.data).then(sendResponse).catch(console.error);
-    return true;
-  } else if (message.action === "getInfo") {
-    getResearchInfo().then(sendResponse).catch(console.error);
-    return true;
-  } else if (message.action === "createTopic") {
-    createTopic(message.topic).then(sendResponse).catch(console.error);
-    return true;
-  } else if (message.action === "removeTopic") {
-    removeTopic(message.topic).then(sendResponse).catch(console.error);
-    return true;
-  } else if (message.action === "removePage") {
-    removePage(message.topic, message.url).then(sendResponse).catch(console.error);
-    return true;
-  } else if (message.action === "exportData") {
-    exportData(message.format).then(sendResponse).catch(console.error);
-    return true;
+  switch (message.action) {
+    case "getInfo":
+      sendResponse({ researchTopics: researchTopics });
+      break;
+    case "createTopic":
+      createTopic(message.topic);
+      break;
+    case "removeTopic":
+      removeTopic(message.topic);
+      break;
+    case "saveInfo":
+      saveInfo(message.data);
+      break;
+    case "removePage":
+      removePage(message.topic, message.url);
+      break;
+    case "saveAnnotation":
+      saveAnnotation(message.data);
+      break;
+    case "updateAnnotation":
+        return updateAnnotation(message.data);
+    case "deleteAnnotation":
+        return deleteAnnotation(message.data);
+    case "getAnnotations":
+      return getAnnotations(message.topic, message.url);
+    default:
+      console.error("Unknown action:", message.action);
   }
 });
 
-function saveResearchInfo(data) {
-  return browser.storage.local.get("researchTopics").then((result) => {
-    let researchTopics = result.researchTopics || {};
-    if (!researchTopics[data.topic]) {
-      researchTopics[data.topic] = [];
-    }
-    researchTopics[data.topic].push({
-      url: data.url,
-      title: data.title,
-      notes: data.notes,
-      rating: data.rating, // Ensure rating is saved
-      timestamp: new Date().toISOString()
-    });
-    return browser.storage.local.set({ researchTopics });
-  });
-}
-
-function getResearchInfo() {
-  return browser.storage.local.get("researchTopics");
-}
-
 function createTopic(topic) {
-  return browser.storage.local.get("researchTopics").then((result) => {
-    let researchTopics = result.researchTopics || {};
-    if (!researchTopics[topic]) {
-      researchTopics[topic] = [];
-      return browser.storage.local.set({ researchTopics }).then(() => {
-        console.log(`Topic "${topic}" created.`);
-      });
-    } else {
-      console.log(`Topic "${topic}" already exists.`);
-    }
-  });
+  if (!researchTopics[topic]) {
+    researchTopics[topic] = [];
+    saveResearchTopics();
+  }
 }
 
 function removeTopic(topic) {
-  return browser.storage.local.get("researchTopics").then((result) => {
-    let researchTopics = result.researchTopics || {};
-    if (researchTopics[topic]) {
-      delete researchTopics[topic];
-      return browser.storage.local.set({ researchTopics }).then(() => {
-        console.log(`Topic "${topic}" removed.`);
-      });
-    }
-  });
+  if (researchTopics[topic]) {
+    delete researchTopics[topic];
+    saveResearchTopics();
+  }
+}
+
+function saveInfo(data) {
+  if (!researchTopics[data.topic]) {
+    researchTopics[data.topic] = [];
+  }
+  
+  const existingPageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
+  
+  if (existingPageIndex !== -1) {
+    // Update existing page
+    researchTopics[data.topic][existingPageIndex] = {
+      ...researchTopics[data.topic][existingPageIndex],
+      ...data,
+      timestamp: Date.now()
+    };
+  } else {
+    // Add new page
+    researchTopics[data.topic].push({
+      ...data,
+      timestamp: Date.now()
+    });
+  }
+  
+  saveResearchTopics();
 }
 
 function removePage(topic, url) {
-  console.log(`Attempting to remove page ${url} from topic ${topic}`);
-  return browser.storage.local.get("researchTopics").then((result) => {
-    let researchTopics = result.researchTopics || {};
-    if (researchTopics[topic]) {
-      researchTopics[topic] = researchTopics[topic].filter(page => page.url !== url);
-      return browser.storage.local.set({ researchTopics }).then(() => {
-        console.log(`Page ${url} removed from topic ${topic}`);
-      });
-    }
-  });
+  if (researchTopics[topic]) {
+    researchTopics[topic] = researchTopics[topic].filter(page => page.url !== url);
+    saveResearchTopics();
+  }
 }
 
-function exportData(format) {
-  return browser.storage.local.get("researchTopics").then((result) => {
-    const researchTopics = result.researchTopics || {};
-    let dataStr;
-    let mimeType;
-    if (format === "json") {
-      dataStr = JSON.stringify(researchTopics, null, 2);
-      mimeType = "application/json";
-    } else if (format === "csv") {
-      const headers = "Topic,URL,Title,Notes,Rating,Timestamp\n";
-      const rows = Object.keys(researchTopics).flatMap(topic =>
-        researchTopics[topic].map(page =>
-          `${topic},"${page.url}","${page.title}","${page.notes}",${page.rating},"${page.timestamp}"\n`
-        )
-      );
-      dataStr = headers + rows.join("");
-      mimeType = "text/csv";
-    } else if (format === "txt") {
-      const lines = Object.keys(researchTopics).flatMap(topic => [
-        `Topic: ${topic}`,
-        ...researchTopics[topic].map(page =>
-          `URL: ${page.url}\nTitle: ${page.title}\nNotes: ${page.notes}\nRating: ${getRatingText(page.rating)}\nTimestamp: ${page.timestamp}\n`
-        ),
-        "\n"
-      ]);
-      dataStr = lines.join("\n");
-      mimeType = "text/plain";
+function saveAnnotation(data) {
+  if (!researchTopics[data.topic]) {
+    researchTopics[data.topic] = [];
+  }
+  
+  const pageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
+
+  if (pageIndex !== -1) {
+    if (!researchTopics[data.topic][pageIndex].annotations) {
+      researchTopics[data.topic][pageIndex].annotations = [];
     }
-    return { dataStr, mimeType };
-  });
+    researchTopics[data.topic][pageIndex].annotations.push({
+      note: data.note,
+      timestamp: data.timestamp
+    });
+  } else {
+    // If the page doesn't exist, create it with the annotation
+    researchTopics[data.topic].push({
+      url: data.url,
+      annotations: [{
+        note: data.note,
+        timestamp: data.timestamp
+      }]
+    });
+  }
+
+  saveResearchTopics();
+  return Promise.resolve();
 }
 
-function getRatingText(rating) {
-  const ratingTexts = {
-    '1': '1 - Not Relevant',
-    '2': '2 - Somewhat Relevant',
-    '3': '3 - Relevant',
-    '4': '4 - Very Relevant',
-    '5': '5 - Extremely Relevant'
-  };
-  return rating ? ratingTexts[rating] : 'Not rated';
+function getAnnotations(topic, url) {
+  if (researchTopics[topic]) {
+    const page = researchTopics[topic].find(p => p.url === url);
+    if (page && page.annotations) {
+      return Promise.resolve(page.annotations);
+    }
+  }
+  return Promise.resolve([]);
+}
+
+function saveResearchTopics() {
+  browser.storage.local.set({ researchTopics: researchTopics });
+}
+
+function updateAnnotation(data) {
+  if (researchTopics[data.topic]) {
+    const pageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
+    if (pageIndex !== -1 && researchTopics[data.topic][pageIndex].annotations) {
+      researchTopics[data.topic][pageIndex].annotations[data.index] = data.updatedAnnotation;
+      saveResearchTopics();
+      return Promise.resolve();
+    }
+  }
+  return Promise.reject("Annotation not found");
+}
+
+function deleteAnnotation(data) {
+  if (researchTopics[data.topic]) {
+    const pageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
+    if (pageIndex !== -1 && researchTopics[data.topic][pageIndex].annotations) {
+      researchTopics[data.topic][pageIndex].annotations.splice(data.index, 1);
+      saveResearchTopics();
+      return Promise.resolve();
+    }
+  }
+  return Promise.reject("Annotation not found");
 }

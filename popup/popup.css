@@ -361,3 +361,33 @@ label[for="pageRating"] {
   margin-bottom: 5px;
   font-weight: bold;
 }
+
+#annotationSection {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.annotation {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 90%; /* Adjust this value as needed */
+  max-width: 500px; /* Adjust this value as needed */
+  box-sizing: border-box;
+}
+
+#highlightButton {
+  margin-bottom: 10px;
+  align-self: center;
+}
+
+#annotationList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

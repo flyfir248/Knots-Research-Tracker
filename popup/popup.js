@@ -12,12 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
   const pageRating = document.getElementById("pageRating");
-
-  // New elements for settings
   const settingsButton = document.getElementById("settingsButton");
   const settingsDropdown = document.getElementById("settingsDropdown");
   const textSizeSelect = document.getElementById("textSize");
   const themeSelect = document.getElementById("theme");
+  const highlightButton = document.getElementById("highlightButton");
+  const annotationList = document.getElementById("annotationList");
+
+  let currentHighlight = null;
 
   loadTopics();
 
@@ -51,32 +53,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-    saveButton.addEventListener("click", () => {
-      const selectedTopic = topicSelect.value;
-      if (selectedTopic) {
-        browser.tabs.query({active: true, currentWindow: true}).then((tabs) => {
-          const activeTab = tabs[0];
-          const rating = pageRating.value; // Make sure this line is present
-          browser.runtime.sendMessage({
-            action: "saveInfo",
-            data: {
-              topic: selectedTopic,
-              url: activeTab.url,
-              title: activeTab.title,
-              notes: notesInput.value,
-              rating: rating, // Ensure this is included
-              timestamp: Date.now()
-            }
-          }).then(() => {
-            loadTopics();
-            notesInput.value = "";
-            visualizeThread(selectedTopic);
-          });
+  saveButton.addEventListener("click", () => {
+    const selectedTopic = topicSelect.value;
+    if (selectedTopic) {
+      browser.tabs.query({active: true, currentWindow: true}).then((tabs) => {
+        const activeTab = tabs[0];
+        const rating = pageRating.value;
+        browser.runtime.sendMessage({
+          action: "saveInfo",
+          data: {
+            topic: selectedTopic,
+            url: activeTab.url,
+            title: activeTab.title,
+            notes: notesInput.value,
+            rating: rating,
+            timestamp: Date.now()
+          }
+        }).then(() => {
+          loadTopics();
+          notesInput.value = "";
+          visualizeThread(selectedTopic);
         });
-      } else {
-        alert("Please select a topic first.");
-      }
-    });
+      });
+    } else {
+      alert("Please select a topic first.");
+    }
+  });
 
   topicSelect.addEventListener("change", () => {
     visualizeThread(topicSelect.value);
@@ -109,26 +111,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Toggle settings menu
   settingsButton.addEventListener("click", () => {
     settingsDropdown.classList.toggle("hidden");
   });
 
-  // Apply text size
   textSizeSelect.addEventListener("change", (e) => {
     document.body.classList.remove("text-small", "text-medium", "text-large");
     document.body.classList.add(`text-${e.target.value}`);
     saveSettings();
   });
 
-  // Apply theme
   themeSelect.addEventListener("change", (e) => {
     document.body.classList.remove("theme-default", "theme-dark", "theme-light", "theme-sepia", "theme-forest", "theme-ocean", "theme-sunset", "theme-cyberpunk");
     document.body.classList.add(`theme-${e.target.value}`);
     saveSettings();
   });
 
-  // Load saved settings
+  highlightButton.addEventListener("click", highlightSelectedText);
+
   loadSettings();
 });
 
@@ -137,7 +137,6 @@ function loadTopics() {
     const topicSelect = document.getElementById("topicSelect");
     const researchTopics = response.researchTopics || {};
 
-    // Clear existing options
     topicSelect.innerHTML = '<option value="">Select a topic</option>';
 
     if (Object.keys(researchTopics).length === 0) {
@@ -170,22 +169,33 @@ function visualizeThread(topic) {
     threadVisualizer.innerHTML = "";
 
     pages.forEach((page) => {
-    const container = document.createElement("div");
-    container.className = "page-container";
-    container.innerHTML = `
-      <h3>${page.title}</h3>
-      <p><a href="${page.url}" target="_blank">${page.url}</a></p>
-      <p>${page.notes}</p>
-      <p><em>Rating:</em> ${getRatingText(page.rating)}</p>
-      <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
-      <button class="removePageButton" data-url="${page.url}">Remove</button>
-    `;
+      const container = document.createElement("div");
+      container.className = "page-container";
+      container.innerHTML = `
+        <h3>${page.title}</h3>
+        <p><a href="${page.url}" target="_blank">${page.url}</a></p>
+        <p>${page.notes}</p>
+        <p><em>Rating:</em> ${getRatingText(page.rating)}</p>
+        <p><em>Timestamp:</em> ${new Date(page.timestamp).toLocaleString()}</p>
+        <button class="removePageButton" data-url="${page.url}">Remove</button>
+        <button class="annotatePageButton" data-url="${page.url}">Annotate</button>
+        <div class="annotationList" data-url="${page.url}"></div>
+      `;
 
       container.querySelector(".removePageButton").addEventListener("click", () => {
         removePage(topic, page.url);
       });
 
+      container.querySelector(".annotatePageButton").addEventListener("click", () => {
+        promptForAnnotation(topic, page.url);
+      });
+
       threadVisualizer.appendChild(container);
+    });
+
+    // Load annotations for all pages
+    pages.forEach(page => {
+      loadAnnotations(topic, page.url);
     });
   });
 }
@@ -316,4 +326,138 @@ function loadSettings() {
     document.getElementById("theme").value = settings.theme;
     document.body.classList.add(`text-${settings.textSize}`, `theme-${settings.theme}`);
   });
+}
+
+function highlightSelectedText() {
+  browser.tabs.executeScript({
+    code: `
+      (function() {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.style.backgroundColor = 'yellow';
+        span.className = 'knots-highlight';
+        range.surroundContents(span);
+        return {
+          text: selection.toString(),
+          html: span.outerHTML
+        };
+      })();
+    `
+  }).then((result) => {
+    if (result[0]) {
+      currentHighlight = result[0];
+      promptForAnnotation();
+    }
+  });
+}
+
+function promptForAnnotation(topic, url) {
+  const note = prompt("Add a note for this page:", "");
+  if (note !== null) {
+    saveAnnotation(topic, url, note);
+  }
+}
+
+function saveAnnotation(topic, url, note) {
+  browser.runtime.sendMessage({
+    action: "saveAnnotation",
+    data: {
+      topic: topic,
+      url: url,
+      note: note,
+      timestamp: Date.now()
+    }
+  }).then(() => {
+    loadAnnotations(topic, url);
+  });
+}
+
+function loadAnnotations(topic, url) {
+  browser.runtime.sendMessage({
+    action: "getAnnotations",
+    topic: topic,
+    url: url
+  }).then((annotations) => {
+    displayAnnotations(topic, url, annotations);
+  });
+}
+
+function displayAnnotations(topic, url, annotations) {
+  const annotationList = document.querySelector(`.annotationList[data-url="${url}"]`);
+  annotationList.innerHTML = "";
+  annotations.forEach((annotation, index) => {
+    const annotationElement = document.createElement("div");
+    annotationElement.className = "annotation";
+    annotationElement.innerHTML = `
+      <p><strong>Note:</strong> ${annotation.note}</p>
+      <p><em>Timestamp:</em> ${new Date(annotation.timestamp).toLocaleString()}</p>
+      <button class="editAnnotation" data-topic="${topic}" data-url="${url}" data-index="${index}">Edit</button>
+      <button class="deleteAnnotation" data-topic="${topic}" data-url="${url}" data-index="${index}">Delete</button>
+    `;
+    annotationList.appendChild(annotationElement);
+  });
+
+  annotationList.querySelectorAll(".editAnnotation").forEach(button => {
+    button.addEventListener("click", editAnnotation);
+  });
+  annotationList.querySelectorAll(".deleteAnnotation").forEach(button => {
+    button.addEventListener("click", deleteAnnotation);
+  });
+}
+
+function editAnnotation(event) {
+  const { topic, url, index } = event.target.dataset;
+
+  browser.runtime.sendMessage({
+    action: "getAnnotations",
+    topic: topic,
+    url: url
+  }).then((annotations) => {
+    if (annotations && annotations[index]) {
+      const annotation = annotations[index];
+      const newNote = prompt("Edit the note for this page:", annotation.note);
+
+      if (newNote !== null) {
+        annotation.note = newNote;
+
+        browser.runtime.sendMessage({
+          action: "updateAnnotation",
+          data: {
+            topic: topic,
+            url: url,
+            index: parseInt(index),
+            updatedAnnotation: annotation
+          }
+        }).then(() => {
+          loadAnnotations(topic, url);
+        }).catch((error) => {
+          console.error("Error updating annotation:", error);
+        });
+      }
+    } else {
+      console.error("Annotation not found at index:", index);
+    }
+  }).catch((error) => {
+    console.error("Error getting annotations:", error);
+  });
+}
+
+function deleteAnnotation(event) {
+  const { topic, url, index } = event.target.dataset;
+
+  if (confirm("Are you sure you want to delete this annotation?")) {
+    browser.runtime.sendMessage({
+      action: "deleteAnnotation",
+      data: {
+        topic: topic,
+        url: url,
+        index: parseInt(index)
+      }
+    }).then(() => {
+      loadAnnotations(topic, url);
+    }).catch((error) => {
+      console.error("Error deleting annotation:", error);
+    });
+  }
 }

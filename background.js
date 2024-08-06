@@ -57,9 +57,9 @@ function saveInfo(data) {
   if (!researchTopics[data.topic]) {
     researchTopics[data.topic] = [];
   }
-  
+
   const existingPageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
-  
+
   if (existingPageIndex !== -1) {
     // Update existing page
     researchTopics[data.topic][existingPageIndex] = {
@@ -74,7 +74,7 @@ function saveInfo(data) {
       timestamp: Date.now()
     });
   }
-  
+
   saveResearchTopics();
 }
 
@@ -89,7 +89,7 @@ function saveAnnotation(data) {
   if (!researchTopics[data.topic]) {
     researchTopics[data.topic] = [];
   }
-  
+
   const pageIndex = researchTopics[data.topic].findIndex(page => page.url === data.url);
 
   if (pageIndex !== -1) {
